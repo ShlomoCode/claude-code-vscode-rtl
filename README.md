@@ -2,10 +2,17 @@
 
 Fixes RTL text alignment in the [Claude Code VS Code extension](https://marketplace.visualstudio.com/items?itemName=anthropic.claude-code) for Hebrew, Arabic, and other RTL languages.
 
-## Usage
+## Installation & Usage
 
 ```bash
-npx claude-code-rtl-fix           # Apply fix
+npx claude-code-rtl-fix
+```
+
+Re-run after each extension update.
+
+### Options
+
+```bash
 npx claude-code-rtl-fix --revert  # Revert
 npx claude-code-rtl-fix --check   # Check status
 ```
