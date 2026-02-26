@@ -31,4 +31,4 @@ Windows, macOS, Linux, WSL, Codespaces, Cursor, VS Code Insiders.
 
 ---
 
-Built in one shot with [Claude Code](https://docs.anthropic.com/en/docs/claude-code) + [Babysitter](https://github.com/a5c-ai/babysitter) — spun up an ephemeral GitHub Codespace with VS Code, gave it a single prompt to write an RTL fix with E2E tests using Babysitter, and ran it on YOLO mode. When the agent has clear completion criteria, self-feedback capabilities, and Babysitter enforcing no skipped steps — it delivers.
+Built in one shot with [Claude Code](https://docs.anthropic.com/en/docs/claude-code) + [Babysitter](https://github.com/a5c-ai/babysitter) — spun up an GitHub Codespace (so Claude has VS Code to run tests), gave it a single prompt to write an RTL fix with E2E tests using Babysitter, and ran it on YOLO mode. When the agent has clear completion criteria, self-feedback capabilities, and Babysitter enforcing no skipped steps — it delivers.
