@@ -1,0 +1,31 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "RTL Fix: Apply Patch",
+      "type": "shell",
+      "command": "node src/patch-rtl.js",
+      "problemMatcher": [],
+      "group": "build"
+    },
+    {
+      "label": "RTL Fix: Revert Patch",
+      "type": "shell",
+      "command": "node src/patch-rtl.js --revert",
+      "problemMatcher": []
+    },
+    {
+      "label": "RTL Fix: Check Status",
+      "type": "shell",
+      "command": "node src/patch-rtl.js --check",
+      "problemMatcher": []
+    },
+    {
+      "label": "RTL Fix: Run Tests",
+      "type": "shell",
+      "command": "node test/patch-rtl.test.js",
+      "problemMatcher": [],
+      "group": "test"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "name": "claude-code-rtl-fix",
+  "version": "1.0.0",
+  "description": "Fixes RTL text alignment in Claude Code VS Code extension for Hebrew, Arabic, and other RTL languages",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ShlomoCode/claude-code-vscode-rtl.git"
+  },
+  "homepage": "https://github.com/ShlomoCode/claude-code-vscode-rtl#readme",
+  "bin": {
+    "claude-code-rtl-fix": "fix-rtl.js"
+  },
+  "files": [
+    "fix-rtl.js"
+  ],
+  "keywords": [
+    "claude-code",
+    "rtl",
+    "hebrew",
+    "arabic",
+    "vscode",
+    "bidi"
+  ],
+  "scripts": {
+    "patch": "node fix-rtl.js",
+    "patch:revert": "node fix-rtl.js --revert",
+    "test": "node test/patch-rtl.test.js"
+  }
+}

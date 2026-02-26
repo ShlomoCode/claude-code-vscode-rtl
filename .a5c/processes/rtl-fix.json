@@ -1,0 +1,32 @@
+{
+  "name": "rtl-fix",
+  "description": "Apply and verify RTL fix for Claude Code VS Code extension",
+  "version": "1.0.0",
+  "steps": [
+    {
+      "id": "unit-tests",
+      "name": "Run unit tests",
+      "command": "node test/patch-rtl.test.js",
+      "quality": {
+        "target": "all-pass",
+        "metric": "exit-code"
+      }
+    },
+    {
+      "id": "apply-patch",
+      "name": "Apply RTL patch",
+      "command": "node src/patch-rtl.js",
+      "dependsOn": ["unit-tests"]
+    },
+    {
+      "id": "verify-patch",
+      "name": "Verify patch applied",
+      "command": "node src/patch-rtl.js --check",
+      "dependsOn": ["apply-patch"],
+      "quality": {
+        "target": "patched",
+        "metric": "output-contains"
+      }
+    }
+  ]
+}
