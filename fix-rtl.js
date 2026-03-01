@@ -65,18 +65,14 @@ ${h("interruptedMessage")}, ${h("progressContent")},
 
 ${msg}${h("userMessageContainer")} { text-align: start; }
 
-${msg} p, ${msg} li, ${msg} span, ${msg} div,
+${msg} p, ${msg} li, ${msg} div,
 [data-testid="assistant-message"] p, [data-testid="assistant-message"] li,
-[data-testid="assistant-message"] span, [data-testid="assistant-message"] div
+[data-testid="assistant-message"] div
 { unicode-bidi: plaintext; text-align: start; }
 
 ${msg} pre, ${msg} code,
 [data-testid="assistant-message"] pre, [data-testid="assistant-message"] code
 { unicode-bidi: normal; direction: ltr; text-align: left; }
-
-${timeline} { padding-inline-start: 30px; padding-left: unset; }
-${timeline}::before { inset-inline-start: 9px; left: unset; }
-${timeline}::after { inset-inline-start: 12px; left: unset; }
 
 [class*="inputContainer_"] textarea, [class*="inputContainer_"] [contenteditable]
 { unicode-bidi: plaintext; text-align: start; }
@@ -91,39 +87,43 @@ function stripPatch(css) {
   return css.substring(0, i).replace(/\n+$/, "") + (j !== -1 ? css.substring(j + MARKER.length) : "");
 }
 
-// ── Main ───────────────────────────────────────────────────────────────────────
+// ── Exports (for testing) / CLI ──────────────────────────────────────────────
 
-const args = process.argv.slice(2);
-const exts = findExtensions();
+module.exports = { MARKER, findExtensions, buildCss, stripPatch };
 
-if (!exts.length) { console.error("Claude Code extension not found."); process.exit(1); }
+if (require.main === module) {
+  const args = process.argv.slice(2);
+  const exts = findExtensions();
 
-for (const ext of exts) {
-  const file = path.join(ext, "webview", "index.css");
-  const ver = path.basename(ext).replace("anthropic.claude-code-", "");
-  if (!fs.existsSync(file)) continue;
+  if (!exts.length) { console.error("Claude Code extension not found."); process.exit(1); }
 
-  if (args.includes("--check")) {
-    console.log(`[${ver}] ${fs.readFileSync(file, "utf8").includes(MARKER) ? "PATCHED" : "NOT PATCHED"}`);
-    continue;
-  }
+  for (const ext of exts) {
+    const file = path.join(ext, "webview", "index.css");
+    const ver = path.basename(ext).replace("anthropic.claude-code-", "");
+    if (!fs.existsSync(file)) continue;
 
-  if (args.includes("--revert")) {
+    if (args.includes("--check")) {
+      console.log(`[${ver}] ${fs.readFileSync(file, "utf8").includes(MARKER) ? "PATCHED" : "NOT PATCHED"}`);
+      continue;
+    }
+
+    if (args.includes("--revert")) {
+      const bak = file + ".bak";
+      if (fs.existsSync(bak)) { fs.copyFileSync(bak, file); fs.unlinkSync(bak); }
+      else { fs.writeFileSync(file, stripPatch(fs.readFileSync(file, "utf8"))); }
+      console.log(`[${ver}] Reverted.`);
+      continue;
+    }
+
+    let css = fs.readFileSync(file, "utf8");
+    css = stripPatch(css); // idempotent
+    if (!css.match(/\.message_[A-Za-z0-9]+/)) { console.error(`[${ver}] Unrecognized CSS.`); continue; }
+
     const bak = file + ".bak";
-    if (fs.existsSync(bak)) { fs.copyFileSync(bak, file); fs.unlinkSync(bak); }
-    else { fs.writeFileSync(file, stripPatch(fs.readFileSync(file, "utf8"))); }
-    console.log(`[${ver}] Reverted.`);
-    continue;
+    if (!fs.existsSync(bak)) fs.writeFileSync(bak, css);
+    fs.writeFileSync(file, css + "\n" + buildCss(css));
+    console.log(`[${ver}] RTL patch applied!`);
   }
 
-  let css = fs.readFileSync(file, "utf8");
-  css = stripPatch(css); // idempotent
-  if (!css.match(/\.message_[A-Za-z0-9]+/)) { console.error(`[${ver}] Unrecognized CSS.`); continue; }
-
-  const bak = file + ".bak";
-  if (!fs.existsSync(bak)) fs.writeFileSync(bak, css);
-  fs.writeFileSync(file, css + "\n" + buildCss(css));
-  console.log(`[${ver}] RTL patch applied!`);
+  if (!args.includes("--check")) console.log('\nReload: Ctrl+Shift+P -> "Reload Window"');
 }
-
-if (!args.includes("--check")) console.log('\nReload: Ctrl+Shift+P -> "Reload Window"');
