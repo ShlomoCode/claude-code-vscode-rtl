@@ -198,6 +198,20 @@ test("buildCss: overrides message container align-items for full-width children"
   );
 });
 
+// --- Bug: bullet points on wrong side (ul/ol missing from bidi selectors) ---
+
+test("buildCss: includes ul and ol in unicode-bidi selectors for correct bullet placement", () => {
+  const css = buildCss(SAMPLE_CSS);
+  // Without unicode-bidi: plaintext on ul/ol, list markers stay on the left in RTL text.
+  // The patch should target ul and ol elements inside message containers.
+  const ruleBlocks = css.split(/\}/).map((block) => block + "}");
+  const bidiBlocks = ruleBlocks.filter((b) => b.includes("unicode-bidi: plaintext"));
+  for (const tag of ["ul", "ol"]) {
+    const found = bidiBlocks.some((block) => new RegExp(`\\b${tag}\\b`).test(block));
+    assert(found, `Should include ${tag} in unicode-bidi: plaintext selectors`);
+  }
+});
+
 // --- stripPatch ---
 
 test("stripPatch: removes patch section between markers", () => {
