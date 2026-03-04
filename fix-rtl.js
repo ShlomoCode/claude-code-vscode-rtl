@@ -65,6 +65,8 @@ ${h("interruptedMessage")}, ${h("progressContent")},
 
 ${msg}${h("userMessageContainer")} { text-align: start; }
 
+${msg} { align-items: stretch; }
+
 ${msg} p, ${msg} li, ${msg} div,
 ${msg} h1, ${msg} h2, ${msg} h3, ${msg} h4, ${msg} h5, ${msg} h6,
 [data-testid="assistant-message"] p, [data-testid="assistant-message"] li,

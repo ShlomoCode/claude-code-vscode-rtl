@@ -181,6 +181,23 @@ test("buildCss: includes heading elements h1-h6 in unicode-bidi selectors", () =
   }
 });
 
+// --- Bug: user messages always left-aligned (align-items: flex-start) ---
+
+test("buildCss: overrides message container align-items for full-width children", () => {
+  const css = buildCss(SAMPLE_CSS);
+  // The message container has align-items: flex-start which keeps children narrow and left-positioned.
+  // The patch should override this to allow children to stretch full-width so text-align: start works.
+  assert(css.includes("align-items"), "Should include align-items override for message container");
+  // Specifically, it should use align-items: stretch (or similar) on the message container
+  const ruleBlocks = css.split(/\}/).map((block) => block + "}");
+  const alignBlock = ruleBlocks.find((b) => b.includes("align-items"));
+  assert(alignBlock, "Should have a rule block with align-items");
+  assert(
+    alignBlock.includes(".message_Abc123"),
+    "align-items rule should target the message container"
+  );
+});
+
 // --- stripPatch ---
 
 test("stripPatch: removes patch section between markers", () => {
