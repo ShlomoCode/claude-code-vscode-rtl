@@ -66,8 +66,11 @@ ${h("interruptedMessage")}, ${h("progressContent")},
 ${msg}${h("userMessageContainer")} { text-align: start; }
 
 ${msg} p, ${msg} li, ${msg} div,
+${msg} h1, ${msg} h2, ${msg} h3, ${msg} h4, ${msg} h5, ${msg} h6,
 [data-testid="assistant-message"] p, [data-testid="assistant-message"] li,
-[data-testid="assistant-message"] div
+[data-testid="assistant-message"] div,
+[data-testid="assistant-message"] h1, [data-testid="assistant-message"] h2, [data-testid="assistant-message"] h3,
+[data-testid="assistant-message"] h4, [data-testid="assistant-message"] h5, [data-testid="assistant-message"] h6
 { unicode-bidi: plaintext; text-align: start; }
 
 ${msg} pre, ${msg} code,

@@ -162,6 +162,25 @@ test("buildCss: preserves original timeline padding-left in source CSS", () => {
   assert.strictEqual(paddingLeftMatches.length, 1, "Should be exactly one padding-left rule");
 });
 
+// --- Bug: headings (h1-h6) missing from bidi selectors ---
+
+test("buildCss: includes heading elements h1-h6 in unicode-bidi selectors", () => {
+  const css = buildCss(SAMPLE_CSS);
+  const headings = ["h1", "h2", "h3", "h4", "h5", "h6"];
+  // Find all rule blocks that contain unicode-bidi: plaintext
+  const ruleBlocks = css.split(/\}/).map((block) => block + "}");
+  const bidiBlocks = ruleBlocks.filter((b) => b.includes("unicode-bidi: plaintext"));
+  // At least one bidi block should contain selectors for each heading level
+  for (const tag of headings) {
+    const found = bidiBlocks.some((block) => {
+      // Match the tag as a descendant selector (e.g., ".message_Abc123 h1" or '[data-testid="assistant-message"] h1')
+      const pattern = new RegExp(`\\b${tag}\\b`);
+      return pattern.test(block);
+    });
+    assert(found, `Should include ${tag} in unicode-bidi: plaintext selectors`);
+  }
+});
+
 // --- stripPatch ---
 
 test("stripPatch: removes patch section between markers", () => {
