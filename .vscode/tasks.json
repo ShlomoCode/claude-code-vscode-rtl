@@ -4,20 +4,20 @@
     {
       "label": "RTL Fix: Apply Patch",
       "type": "shell",
-      "command": "node src/patch-rtl.js",
+      "command": "node fix-rtl.js",
       "problemMatcher": [],
       "group": "build"
     },
     {
       "label": "RTL Fix: Revert Patch",
       "type": "shell",
-      "command": "node src/patch-rtl.js --revert",
+      "command": "node fix-rtl.js --revert",
       "problemMatcher": []
     },
     {
       "label": "RTL Fix: Check Status",
       "type": "shell",
-      "command": "node src/patch-rtl.js --check",
+      "command": "node fix-rtl.js --check",
       "problemMatcher": []
     },
     {
