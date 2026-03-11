@@ -162,6 +162,56 @@ test("buildCss: preserves original timeline padding-left in source CSS", () => {
   assert.strictEqual(paddingLeftMatches.length, 1, "Should be exactly one padding-left rule");
 });
 
+// --- Bug: headings (h1-h6) missing from bidi selectors ---
+
+test("buildCss: includes heading elements h1-h6 in unicode-bidi selectors", () => {
+  const css = buildCss(SAMPLE_CSS);
+  const headings = ["h1", "h2", "h3", "h4", "h5", "h6"];
+  // Find all rule blocks that contain unicode-bidi: plaintext
+  const ruleBlocks = css.split(/\}/).map((block) => block + "}");
+  const bidiBlocks = ruleBlocks.filter((b) => b.includes("unicode-bidi: plaintext"));
+  // At least one bidi block should contain selectors for each heading level
+  for (const tag of headings) {
+    const found = bidiBlocks.some((block) => {
+      // Match the tag as a descendant selector (e.g., ".message_Abc123 h1" or '[data-testid="assistant-message"] h1')
+      const pattern = new RegExp(`\\b${tag}\\b`);
+      return pattern.test(block);
+    });
+    assert(found, `Should include ${tag} in unicode-bidi: plaintext selectors`);
+  }
+});
+
+// --- Bug: user messages always left-aligned (align-items: flex-start) ---
+
+test("buildCss: overrides message container align-items for full-width children", () => {
+  const css = buildCss(SAMPLE_CSS);
+  // The message container has align-items: flex-start which keeps children narrow and left-positioned.
+  // The patch should override this to allow children to stretch full-width so text-align: start works.
+  assert(css.includes("align-items"), "Should include align-items override for message container");
+  // Specifically, it should use align-items: stretch (or similar) on the message container
+  const ruleBlocks = css.split(/\}/).map((block) => block + "}");
+  const alignBlock = ruleBlocks.find((b) => b.includes("align-items"));
+  assert(alignBlock, "Should have a rule block with align-items");
+  assert(
+    alignBlock.includes(".message_Abc123"),
+    "align-items rule should target the message container"
+  );
+});
+
+// --- Bug: bullet points on wrong side (ul/ol missing from bidi selectors) ---
+
+test("buildCss: includes ul and ol in unicode-bidi selectors for correct bullet placement", () => {
+  const css = buildCss(SAMPLE_CSS);
+  // Without unicode-bidi: plaintext on ul/ol, list markers stay on the left in RTL text.
+  // The patch should target ul and ol elements inside message containers.
+  const ruleBlocks = css.split(/\}/).map((block) => block + "}");
+  const bidiBlocks = ruleBlocks.filter((b) => b.includes("unicode-bidi: plaintext"));
+  for (const tag of ["ul", "ol"]) {
+    const found = bidiBlocks.some((block) => new RegExp(`\\b${tag}\\b`).test(block));
+    assert(found, `Should include ${tag} in unicode-bidi: plaintext selectors`);
+  }
+});
+
 // --- stripPatch ---
 
 test("stripPatch: removes patch section between markers", () => {
