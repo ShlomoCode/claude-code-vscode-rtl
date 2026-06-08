@@ -71,6 +71,16 @@ test("buildCss: includes unicode-bidi and text-align rules", () => {
   assert(css.includes("text-align: start"), "Should use text-align: start");
 });
 
+test("buildCss: aligns markdown headings (bidi does not inherit to block children)", () => {
+  const css = buildCss(SAMPLE_CSS);
+  for (const tag of ["h1", "h2", "h3", "h4", "h5", "h6", "blockquote"]) {
+    assert(
+      css.includes(`[data-testid="assistant-message"] ${tag}`),
+      `Should target ${tag} directly in the message body`
+    );
+  }
+});
+
 test("buildCss: keeps code blocks LTR", () => {
   const css = buildCss(SAMPLE_CSS);
   assert(css.includes("direction: ltr"), "Code should stay LTR");
@@ -101,6 +111,59 @@ test("buildCss: handles different hashes per class", () => {
   const result = buildCss(css);
   assert(result.includes(".message_AAA111"), "Should use message hash");
   assert(result.includes(".userMessage_BBB222"), "Should use userMessage hash");
+});
+
+// --- Bug fix: correct .message_ hash when several modules share the name ---
+
+test("buildCss: anchors .message_ on the chat module, not the first match", () => {
+  // `.message_` appears first in unrelated modules; the chat module is the one
+  // that also defines userMessageContainer with the same hash.
+  const css = [
+    ".message_STATUS1{opacity:0.6;font-style:italic}", // status text — comes first
+    ".message_EMPTY2{text-align:center}", // empty-state
+    ".message_CHAT99{display:flex;flex-direction:column}",
+    ".userMessageContainer_CHAT99{display:inline-block}",
+    ".message_CHAT99.userMessageContainer_CHAT99{text-align:left}",
+  ].join("");
+  const result = buildCss(css);
+  assert(result.includes(".message_CHAT99"), "Should target the chat-module hash");
+  assert(!result.includes(".message_STATUS1"), "Should NOT target the status-text hash");
+  // The user-message override must match the real DOM to beat the (0,2,0) rule.
+  assert(
+    result.includes(".message_CHAT99.userMessageContainer_CHAT99"),
+    "Should emit the two-class override against the correct hash"
+  );
+});
+
+// --- Level 2: UI chrome outside the message body ---
+
+test("buildCss: aligns UI chrome (menus, session list, links) to start", () => {
+  const css = buildCss(SAMPLE_CSS);
+  for (const name of ["menuItem", "sessionItem", "nullStateLink", "optionButton", "titleText"]) {
+    assert(css.includes(`[class*="${name}_"]`), `Should target ${name}`);
+  }
+});
+
+test("buildCss: UI chrome rule uses plaintext + start (not bare left→start)", () => {
+  const css = buildCss(SAMPLE_CSS);
+  // The UI-chrome block must pair plaintext with start; start alone is a no-op
+  // while the element direction stays ltr.
+  const uiRule = css.match(/\[class\*="sessionItem_"\][^{]*\{[^}]*\}/);
+  assert(uiRule, "Should have a sessionItem rule");
+  assert(uiRule[0].includes("unicode-bidi: plaintext"), "UI chrome needs plaintext");
+  assert(uiRule[0].includes("text-align: start"), "UI chrome needs start");
+});
+
+// --- Mirror-based composer: both layers must share the bidi rule ---
+
+test("buildCss: targets BOTH the contenteditable and its mention mirror", () => {
+  const css = buildCss(SAMPLE_CSS);
+  // The composer paints visible text in .mentionMirror_ over a transparent
+  // .messageInput_; treating only one layer desyncs caret from glyphs.
+  const inputRule = css.match(/\[class\*="messageInput_"\][^{]*\{[^}]*\}/);
+  assert(inputRule, "Should have a messageInput rule");
+  assert(inputRule[0].includes('mentionMirror_'), "Must also target the mirror layer");
+  assert(inputRule[0].includes("unicode-bidi: plaintext"), "Composer needs plaintext (per-line direction)");
 });
 
 // --- Bug fix: no span selector (reversed bold text) ---

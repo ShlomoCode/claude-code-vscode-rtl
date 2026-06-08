@@ -53,8 +53,41 @@ function buildCss(css) {
     return m ? `.${name}_${m[1]}` : `[class*="${name}_"]`;
   };
 
-  const msg = h("message");
+  // `.message_` appears in several unrelated CSS modules (status text,
+  // empty-state), and those are emitted *before* the chat module in the bundle,
+  // so a naive first-match grabs the wrong hash and the message-body rules never
+  // match the real chat DOM. Anchor on `userMessageContainer`, whose hash is
+  // unique to the chat module, and reuse it for `.message_`. Fall back to the
+  // first-match heuristic only if that class is absent.
+  const familyHash = (css.match(/\.userMessageContainer_([A-Za-z0-9]+)/) || [])[1];
+  const msg = familyHash ? `.message_${familyHash}` : h("message");
   const timeline = h("timelineMessage");
+
+  // Level 2 — UI chrome outside the message body (menus, session list, links,
+  // labels). In the bundle these carry a hardcoded `text-align: left`, which
+  // resolves to physical left regardless of locale. Pairing `text-align: start`
+  // with `unicode-bidi: plaintext` lets each element follow its own content's
+  // direction — the same proven pair used on the message body above.
+  // Several of these base names appear with multiple module hashes, so we use
+  // `[class*="name_"]` rather than a single discovered hash.
+  const uiChrome = [
+    "menuItem", "menuItemV2", "popupOption", "optionButton", "effortRow", "scopeOption",
+    "sessionItem", "nullStateLink", "viewToolsLink", "manageLink",
+    "noteBeneathButton", "titleText", "toolBodyRowLabel",
+  ].map((n) => `[class*="${n}_"]`).join(", ");
+
+  // Block-level elements inside the message body (including rendered markdown).
+  // `unicode-bidi: plaintext` does NOT inherit to block children, so each block
+  // tag must be targeted directly — headings, list items, table cells, and
+  // blockquotes otherwise fall back to the default ltr direction and align left
+  // regardless of their text.
+  const bodyPrefixes = [msg, '[data-testid="assistant-message"]'];
+  const blockTags = [
+    "p", "li", "div", "h1", "h2", "h3", "h4", "h5", "h6", "blockquote", "th", "td", "dd", "dt",
+  ];
+  const bodyBlocks = bodyPrefixes
+    .flatMap((pfx) => blockTags.map((tag) => `${pfx} ${tag}`))
+    .join(", ");
 
   return `
 ${MARKER}
@@ -65,16 +98,23 @@ ${h("interruptedMessage")}, ${h("progressContent")},
 
 ${msg}${h("userMessageContainer")} { text-align: start; }
 
-${msg} p, ${msg} li, ${msg} div,
-[data-testid="assistant-message"] p, [data-testid="assistant-message"] li,
-[data-testid="assistant-message"] div
+${bodyBlocks}
 { unicode-bidi: plaintext; text-align: start; }
 
 ${msg} pre, ${msg} code,
 [data-testid="assistant-message"] pre, [data-testid="assistant-message"] code
 { unicode-bidi: normal; direction: ltr; text-align: left; }
 
-[class*="inputContainer_"] textarea, [class*="inputContainer_"] [contenteditable]
+/* The composer is a mirror-based editor: a transparent contenteditable
+   (.messageInput_, color: #0000) holds the caret, while an absolutely
+   positioned .mentionMirror_ paints the visible text + mention chips on top.
+   Both layers must get the SAME bidi treatment, or the visible text and the
+   caret drift apart. plaintext makes each line follow its own direction. */
+[class*="messageInput_"], [class*="mentionMirror_"],
+[class*="inputContainer_"] textarea
+{ unicode-bidi: plaintext; text-align: start; }
+
+${uiChrome}
 { unicode-bidi: plaintext; text-align: start; }
 ${MARKER}
 `.trim();
