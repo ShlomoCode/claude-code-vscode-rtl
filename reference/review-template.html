@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'nonce-{{NONCE}}'; img-src data:;">
+<style>
+  body {
+    font-family: var(--vscode-markdown-font-family, var(--vscode-font-family));
+    font-size: var(--vscode-markdown-font-size, 14px);
+    line-height: 1.6;
+    color: var(--vscode-editor-foreground);
+    background: var(--vscode-editor-background);
+    padding: 16px 24px;
+    margin: 0;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    color: var(--vscode-editor-foreground);
+    margin-top: 24px;
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+  h1 { font-size: 1.6em; border-bottom: 1px solid var(--vscode-panel-border); padding-bottom: 8px; }
+  h2 { font-size: 1.3em; border-bottom: 1px solid var(--vscode-panel-border); padding-bottom: 6px; }
+  h3 { font-size: 1.1em; }
+  code {
+    font-family: var(--vscode-editor-font-family);
+    font-size: var(--vscode-editor-font-size, 13px);
+    background: var(--vscode-textCodeBlock-background);
+    padding: 2px 4px;
+    border-radius: 3px;
+  }
+  pre {
+    background: var(--vscode-textCodeBlock-background);
+    padding: 12px;
+    border-radius: 4px;
+    overflow-x: auto;
+  }
+  pre code { background: none; padding: 0; }
+  blockquote {
+    border-left: 3px solid var(--vscode-textBlockQuote-border);
+    margin: 8px 0;
+    padding: 4px 12px;
+    color: var(--vscode-textBlockQuote-foreground);
+  }
+  a { color: var(--vscode-textLink-foreground); }
+  a:hover { color: var(--vscode-textLink-activeForeground); }
+  ul, ol { padding-left: 32px; }
+  li { margin: 4px 0; }
+  table { border-collapse: collapse; width: 100%; }
+  th, td { border: 1px solid var(--vscode-panel-border); padding: 6px 12px; text-align: left; }
+  th { background: var(--vscode-textCodeBlock-background); }
+  hr { border: none; border-top: 1px solid var(--vscode-panel-border); margin: 16px 0; }
+  mark {
+    background: color-mix(in srgb, var(--vscode-editor-findMatchHighlightBackground, #ea5c0055) 60%, transparent);
+    border-radius: 2px;
+    padding: 1px 0;
+    position: relative;
+  }
+  mark .comment-indicator {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    background: var(--vscode-textLink-foreground);
+    color: var(--vscode-editor-background);
+    border-radius: 50%;
+    font-size: 10px;
+    line-height: 14px;
+    text-align: center;
+    margin-left: 2px;
+    cursor: pointer;
+    vertical-align: middle;
+  }
+
+  #comment-btn {
+    position: absolute;
+    background: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+    border: none;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    display: none;
+  }
+  #comment-btn:hover { background: var(--vscode-button-hoverBackground); }
+
+  #comment-input {
+    position: absolute;
+    background: var(--vscode-editorWidget-background);
+    border: 1px solid var(--vscode-editorWidget-border, var(--vscode-panel-border));
+    border-radius: 6px;
+    padding: 12px;
+    z-index: 101;
+    width: 320px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    display: none;
+  }
+  #comment-input .selected-text-preview {
+    font-size: 12px;
+    color: var(--vscode-descriptionForeground);
+    border-left: 2px solid var(--vscode-textBlockQuote-border);
+    padding: 4px 8px;
+    margin-bottom: 8px;
+    max-height: 60px;
+    overflow: hidden;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  #comment-input textarea {
+    width: 100%;
+    min-height: 60px;
+    background: var(--vscode-input-background);
+    color: var(--vscode-input-foreground);
+    border: 1px solid var(--vscode-input-border, var(--vscode-panel-border));
+    border-radius: 3px;
+    padding: 6px 8px;
+    font-family: var(--vscode-font-family);
+    font-size: 13px;
+    resize: vertical;
+    box-sizing: border-box;
+  }
+  #comment-input textarea:focus { outline: 1px solid var(--vscode-focusBorder); }
+  .comment-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+    justify-content: flex-end;
+  }
+  .comment-actions button {
+    padding: 4px 12px;
+    border-radius: 3px;
+    font-size: 12px;
+    cursor: pointer;
+    border: none;
+  }
+  .comment-actions .submit-btn {
+    background: var(--vscode-button-background);
+    color: var(--vscode-button-foreground);
+  }
+  .comment-actions .submit-btn:hover { background: var(--vscode-button-hoverBackground); }
+  .comment-actions .cancel-btn {
+    background: var(--vscode-button-secondaryBackground);
+    color: var(--vscode-button-secondaryForeground);
+  }
+  .comment-actions .cancel-btn:hover { background: var(--vscode-button-secondaryHoverBackground); }
+
+  #comment-banner {
+    display: none;
+    background: var(--vscode-editorWidget-background);
+    border: 1px solid var(--vscode-editorWidget-border);
+    border-radius: 4px;
+    padding: 8px 12px;
+    margin-bottom: 16px;
+    font-size: var(--vscode-font-size);
+    color: var(--vscode-editor-foreground);
+  }
+  #comment-banner .banner-hint {
+    opacity: 0.8;
+    font-size: 0.85em;
+  }
+</style>
+</head>
+<body>
+  <div id="comment-banner">
+    <strong>Ready for review</strong>
+    <div class="banner-hint">Select text to add comments on the plan</div>
+  </div>
+  <div id="content"></div>
+
+  <div id="comment-btn">Add Comment</div>
+
+  <div id="comment-input">
+    <div class="selected-text-preview" id="selected-text-preview"></div>
+    <textarea id="comment-textarea" placeholder="Add your feedback."></textarea>
+    <div class="comment-actions">
+      <button class="cancel-btn" id="cancel-btn">Cancel</button>
+      <button class="submit-btn" id="submit-btn">Add Comment</button>
+    </div>
+  </div>
+</body>
+</html>

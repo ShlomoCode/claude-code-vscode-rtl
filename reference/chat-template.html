@@ -1,0 +1,51 @@
+<!-- Claude Code Chat Webview — shell template (extracted from extension.js) -->
+<!-- Variables in ${...} are injected at runtime by the VS Code extension host. -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <!--
+    Content Security Policy: external https: URLs are blocked to prevent
+    data exfiltration via markdown image URLs.
+  -->
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'none'; ${q}; ${Z}; ${H}; script-src 'nonce-${D}'; ${L};">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Main React SPA stylesheet (webview/index.css) -->
+  <link href="${B}" rel="stylesheet">
+
+  <!-- VS Code font tokens forwarded into CSS custom properties -->
+  <style>
+    :root {
+      --vscode-editor-font-family: ${G} !important;
+      --vscode-editor-font-size: ${M}px !important;
+      --vscode-editor-font-weight: ${A} !important;
+      --vscode-chat-font-size: ${I}px;
+      --vscode-chat-font-family: ${b};
+    }
+  </style>
+</head>
+<body>
+  <!-- Error display (shown if React fails to mount) -->
+  <pre id="claude-error"></pre>
+
+  <!-- React SPA mount point.
+       data-initial-* attributes carry serialized bootstrap state. -->
+  <div id="root"
+    ${j ? `data-initial-prompt="${ZI(j)}"` : ""}
+    ${V ? `data-initial-session="${ZI(V)}"` : ""}
+    ${W ? `data-initial-auth-status="${ZI(JSON.stringify(W))}"` : ""}
+  ></div>
+
+  <!-- UI mode flags — read by the React app at startup -->
+  <script nonce="${D}">
+    window.IS_SIDEBAR           = ${U ? "true" : "false"}
+    window.IS_FULL_EDITOR       = ${v ? "true" : "false"}
+    window.IS_SESSION_LIST_ONLY = ${K ? "true" : "false"}
+  </script>
+
+  <!-- React SPA bundle -->
+  <script nonce="${D}" src="${x}" type="module"></script>
+</body>
+</html>
